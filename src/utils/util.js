@@ -126,33 +126,33 @@ export const loadRemoteScript = function(srcPath, callback) {  /*加载远程js�
   }
 }
 
-export function traverseFieldWidgets(widgetList, handler) {
+export function traverseFieldWidgets(widgetList, handler, parent = null) {
   widgetList.map(w => {
     if (w.formItemFlag) {
-      handler(w)
+      handler(w, parent)
     } else if (w.type === 'grid') {
       w.cols.map(col => {
-        traverseFieldWidgets(col.widgetList, handler)
+        traverseFieldWidgets(col.widgetList, handler, w)
       })
     } else if (w.type === 'table') {
       w.rows.map(row => {
         row.cols.map(cell => {
-          traverseFieldWidgets(cell.widgetList, handler)
+          traverseFieldWidgets(cell.widgetList, handler, w)
         })
       })
     } else if (w.type === 'tab') {
       w.tabs.map(tab => {
-        traverseFieldWidgets(tab.widgetList, handler)
+        traverseFieldWidgets(tab.widgetList, handler, w)
       })
     } else if (w.type === 'sub-form') {
-      traverseFieldWidgets(w.widgetList, handler)
+      traverseFieldWidgets(w.widgetList, handler, w)
     } else if (w.category === 'container') {  //自定义容器
-      traverseFieldWidgets(w.widgetList, handler)
+      traverseFieldWidgets(w.widgetList, handler, w)
     }
   })
 }
 
-export function traverseContainWidgets(widgetList, handler) {
+export function traverseContainerWidgets(widgetList, handler) {
   widgetList.map(w => {
     if (w.category === 'container') {
       handler(w)
@@ -160,22 +160,22 @@ export function traverseContainWidgets(widgetList, handler) {
 
     if (w.type === 'grid') {
       w.cols.map(col => {
-        traverseContainWidgets(col.widgetList, handler)
+        traverseContainerWidgets(col.widgetList, handler)
       })
     } else if (w.type === 'table') {
       w.rows.map(row => {
         row.cols.map(cell => {
-          traverseContainWidgets(cell.widgetList, handler)
+          traverseContainerWidgets(cell.widgetList, handler)
         })
       })
     } else if (w.type === 'tab') {
       w.tabs.map(tab => {
-        traverseContainWidgets(tab.widgetList, handler)
+        traverseContainerWidgets(tab.widgetList, handler)
       })
     } else if (w.type === 'sub-form') {
-      traverseContainWidgets(w.widgetList, handler)
+      traverseContainerWidgets(w.widgetList, handler)
     } else if (w.category === 'container') {  //自定义容器
-      traverseContainWidgets(w.widgetList, handler)
+      traverseContainerWidgets(w.widgetList, handler)
     }
   })
 }
@@ -286,7 +286,7 @@ export function getAllContainerWidgets(widgetList) {
       container: w
     })
   }
-  traverseContainWidgets(widgetList, handlerFn)
+  traverseContainerWidgets(widgetList, handlerFn)
 
   return result
 }
@@ -320,4 +320,32 @@ export function getQueryParam(variable) {
   }
 
   return undefined;
+}
+
+export function getDefaultFormConfig() {
+  return {
+    modelName: 'formData',
+    refName: 'vForm',
+    rulesName: 'rules',
+    labelWidth: 80,
+    labelPosition: 'left',
+    size: '',
+    labelAlign: 'label-left-align',
+    cssCode: '',
+    customClass: '',
+    functions: '',  //全局函数
+    layoutType: 'PC',
+    jsonVersion: 3,
+
+    onFormCreated: '',
+    onFormMounted: '',
+    onFormDataChange: '',
+  }
+}
+
+export function buildDefaultFormJson() {
+  return {
+    widgetList: [],
+    formConfig: deepClone( getDefaultFormConfig() )
+  }
 }

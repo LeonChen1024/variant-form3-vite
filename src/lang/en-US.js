@@ -156,9 +156,9 @@ export default {
       nodeTreeTitle: 'Tree View Of Component Hierarchy',
       clear: 'Clear',
       preview: 'Preview',
-      importJson: 'Import JSON',
-      exportJson: 'Export JSON',
-      exportCode: 'Export Code',
+      importJson: 'Import',
+      exportJson: 'Export',
+      exportCode: 'Codes',
       generateCode: 'Generate Code',
       generateSFC: 'Generate SFC',
     },
@@ -210,6 +210,8 @@ export default {
       automaticDropdown: 'Automatic Dropdown',
       multiple: 'Multiple',
       multipleLimit: 'Multiple Limit',
+      checkStrictly: 'Any Level Selectable',
+      showAllLevels: 'Show All Levels',
       contentPosition: 'Content Position',
       plain: 'Plain',
       round: 'Round',
@@ -319,6 +321,7 @@ export default {
       formModelName: 'Model Name',
       formRefName: 'Ref Name',
       formRulesName: 'Rules Name',
+      syntaxCheckWarning: 'Syntax error in the javascript codes, please check again!',
 
     }
 

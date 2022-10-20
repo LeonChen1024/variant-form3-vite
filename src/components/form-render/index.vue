@@ -43,9 +43,9 @@
   import FieldComponents from '@/components/form-designer/form-widget/field-widget/index'
   import {
     generateId, deepClone, insertCustomCssToHead, insertGlobalFunctionsToHtml, getAllContainerWidgets,
-    getAllFieldWidgets, traverseFieldWidgets} from "@/utils/util"
+    getAllFieldWidgets, traverseFieldWidgets, buildDefaultFormJson
+  } from "@/utils/util"
   import i18n, { changeLocale } from "@/utils/i18n"
-  import eventBus from "@/utils/event-bus"
 
   export default {
     name: "VFormRender",
@@ -57,14 +57,17 @@
       ...FieldComponents,
     },
     props: {
-      formJson: Object, //prop传入的表单JSON配置
+      formJson: { //prop传入的表单JSON配置
+        type: Object,
+        default: () => buildDefaultFormJson()
+      },
       formData: { //prop传入的表单数据
-        Object,
-        default: () => {}
+        type: Object,
+        default: () => ({})
       },
       optionData: { //prop传入的选项数据
         type: Object,
-        default: () => {}
+        default: () => ({})
       },
       previewState: { //是否表单预览状态
         type: Boolean,
@@ -91,9 +94,12 @@
         formDataModel: {
           //
         },
+
         widgetRefList: {},
         subFormRefList: {},
         formId: null,  //表单唯一Id，用于区分页面上的多个v-form-render组件！！
+
+        externalComponents:  {},  //外部组件实例集合
       }
     },
     computed: {
@@ -146,9 +152,11 @@
       this.handleOnMounted()
     },
     methods: {
-      initFormObject() {
+      initFormObject(insertHtmlCodeFlag = true) {
         this.formId = 'vfRender' + generateId()
-        this.insertCustomStyleAndScriptNode()
+        if (!!insertHtmlCodeFlag) {
+          this.insertCustomStyleAndScriptNode()
+        }
         this.addFieldChangeEventHandler()
         this.addFieldValidateEventHandler()
         this.registerFormToRefList()
@@ -170,11 +178,13 @@
 
       insertCustomStyleAndScriptNode() {
         if (!!this.formConfig && !!this.formConfig.cssCode) {
-          insertCustomCssToHead(this.formConfig.cssCode, this.formId)
+          insertCustomCssToHead(this.formConfig.cssCode,
+              !!this.previewState ? '' : this.formId)
         }
 
         if (!!this.formConfig && !!this.formConfig.functions) {
-          insertGlobalFunctionsToHtml(this.formConfig.functions, this.formId)
+          insertGlobalFunctionsToHtml(this.formConfig.functions,
+              !!this.previewState ? '' : this.formId)
         }
       },
 
@@ -410,8 +420,9 @@
             this.formJsonObj['formConfig'] = newFormJsonObj.formConfig
             this.formJsonObj['widgetList'] = newFormJsonObj.widgetList
 
+            this.insertCustomStyleAndScriptNode()  /* 必须先插入表单全局函数，否则VForm内部引用全局函数会报错！！！ */
             this.$nextTick(() => {
-              this.initFormObject()
+              this.initFormObject(false)
               this.handleOnMounted()
             })
           } else {
@@ -431,7 +442,7 @@
         } else if (!!widgetNames && Array.isArray(widgetNames)) {
           eventParams = [...widgetNames]
         }
-        this.broadcast('FieldWidget', 'reloadOptionItems', [eventParams])
+        this.broadcast('FieldWidget', 'reloadOptionItems', eventParams)
       },
 
       getFormData(needValidation = true) {
@@ -466,7 +477,6 @@
 
         // 通知SubForm组件：表单数据更新事件！！
         this.broadcast('ContainerItem', 'setFormData', this.formDataModel)
-
         // 通知FieldWidget组件：表单数据更新事件！！
         this.broadcast('FieldWidget', 'setFormData', this.formDataModel)
       },
@@ -474,7 +484,19 @@
       getFieldValue(fieldName) { //单个字段获取值
         let fieldRef = this.getWidgetRef(fieldName)
         if (!!fieldRef && !!fieldRef.getValue) {
-          fieldRef.getValue()
+          return fieldRef.getValue()
+        }
+
+        if (!fieldRef) { //如果是子表单字段
+          let result = []
+          this.findWidgetNameInSubForm(fieldName).forEach(wn => {
+            let sw = this.getWidgetRef(wn)
+            if (!!sw && !!sw.getValue) {
+              result.push( sw.getValue() )
+            }
+          })
+
+          return result
         }
       },
 
@@ -482,6 +504,15 @@
         let fieldRef = this.getWidgetRef(fieldName)
         if (!!fieldRef && !!fieldRef.setValue) {
           fieldRef.setValue(fieldValue)
+        }
+
+        if (!fieldRef) { //如果是子表单字段
+          this.findWidgetNameInSubForm(fieldName).forEach(wn => {
+            let sw = this.getWidgetRef(wn)
+            if (!!sw && !!sw.setValue) {
+              sw.setValue(fieldValue)
+            }
+          })
         }
       },
 
@@ -501,7 +532,10 @@
             if (!!foundW.widget && (foundW.widget.type === 'sub-form')) {
               foundW.disableSubForm()
             } else {
-              !!foundW.setDisabled && foundW.setDisabled(true)
+              //!!foundW.setDisabled && foundW.setDisabled(true)
+              if (!!foundW.setDisabled) {
+                foundW.setDisabled(true)
+              }
             }
           }
         })
@@ -515,7 +549,10 @@
             if (!!foundW.widget && (foundW.widget.type === 'sub-form')) {
               foundW.enableSubForm()
             } else {
-              !!foundW.setDisabled && foundW.setDisabled(false)
+              //!!foundW.setDisabled && foundW.setDisabled(false)
+              if (!!foundW.setDisabled) {
+                foundW.setDisabled(false)
+              }
             }
           }
         })
@@ -532,7 +569,7 @@
         let wNameList = Object.keys(this.widgetRefList)
         wNameList.forEach(wName => {
           let foundW = this.getWidgetRef(wName)
-          if (!!foundW && !!foundW.resetField) {
+          if (!!foundW && !foundW.subFormItemFlag && !!foundW.resetField) { // 跳过子表单字段！！
             foundW.resetField()
           }
         })
@@ -546,14 +583,14 @@
         this.$refs.renderForm.clearValidate(props)
       },
 
-      /* 验证表单，通过返回true，不通过返回false */
-      validateForm() {
-        let result = null
+      /**
+       * 校验表单
+       * @param callback 回调函数
+       */
+      validateForm(callback) {
         this.$refs['renderForm'].validate((valid) => {
-          result = valid
+          callback(valid)
         })
-
-        return result
       },
 
       validateFields() {
@@ -622,6 +659,33 @@
        */
       getContainerWidgets() {
         return getAllContainerWidgets(this.formJsonObj.widgetList)
+      },
+
+      /**
+       * 增加外部组件引用，可通过getEC()方法获取外部组件，以便在VForm内部调用外部组件方法
+       * @param componentName 外部组件名称
+       * @param externalComponent 外部组件实例
+       */
+      addEC(componentName, externalComponent) {
+        this.externalComponents[componentName] = externalComponent
+      },
+
+      /**
+       * 判断外部组件是否可获取
+       * @param componentName 外部组件名称
+       * @returns {boolean}
+       */
+      hasEC(componentName) {
+        return this.externalComponents.hasOwnProperty(componentName)
+      },
+
+      /**
+       * 获取外部组件实例
+       * @param componentName
+       * @returns {*}
+       */
+      getEC(componentName) {
+        return this.externalComponents[componentName]
       },
 
       //--------------------- 以上为组件支持外部调用的API方法 end ------------------//

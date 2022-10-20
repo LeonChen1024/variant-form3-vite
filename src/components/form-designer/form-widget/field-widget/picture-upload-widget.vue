@@ -9,8 +9,40 @@
                :multiple="field.options.multipleSelect" :file-list="fileList" :show-file-list="field.options.showFileList"
                list-type="picture-card" :class="{'hideUploadDiv': uploadBtnHidden}"
                :limit="field.options.limit" :on-exceed="handlePictureExceed"
-               :before-upload="beforePictureUpload"
-               :on-success="handlePictureUpload" :on-error="handelUploadError" :on-remove="handlePictureRemove">
+               :before-upload="beforePictureUpload" :on-preview="handlePictureCardPreview"
+               :on-success="handlePictureUpload" :on-error="handleUploadError" >
+      <template #file="{ file }">
+        <el-image
+          ref="imageRef"
+          style="width: 100%; height: 100%"
+          :src="file.url"
+          :preview-src-list="previewList"
+          :initial-index="previewIndex"
+          fit="cover"
+          preview-teleported
+        />
+        <!-- 上传成功状态 -->
+        <label class="el-upload-list__item-status-label">
+          <i class="el-icon--upload-success" style="color: #FFF"><svg-icon class="" icon-class="el-check" /></i>
+        </label>
+        <!-- 图片操作按钮 -->
+        <span class="el-upload-list__item-actions">
+          <!-- 预览 -->
+          <span
+            class="el-upload-list__item-preview"
+            @click="handlePictureCardPreview(file)"
+          >
+            <svg-icon icon-class="el-zoom-in" />
+          </span>
+          <!-- 删除 -->
+          <span
+            class="el-upload-list__item-delete"
+            @click="handlePictureRemove(file)"
+          >
+            <svg-icon icon-class="el-delete" />
+          </span>
+        </span>
+      </template>
       <template #tip>
         <div class="el-upload__tip"
              v-if="!!field.options.uploadTip">{{field.options.uploadTip}}</div>
@@ -63,7 +95,7 @@
     data() {
       return {
         oldFieldValue: null, //field组件change之前的值
-        fieldModel: null,
+        fieldModel: [],
         rules: [],
 
         uploadHeaders: {},
@@ -75,12 +107,16 @@
           //authorization: '',  //又拍云上传签名
         },
         fileList: [],  //上传文件列表
+        fileListBeforeRemove: [],  //删除前的文件列表
         uploadBtnHidden: false,
 
+        previewIndex: 1,  // 初始预览图像索引
       }
     },
     computed: {
-
+      previewList() {
+        return this.fileList.map(el => el.url);
+      }
     },
     beforeCreate() {
       /* 这里不能访问方法和属性！！ */
@@ -107,15 +143,8 @@
 
     methods: {
       handlePictureExceed() {
-        let uploadLimit = this.field.options.limit  /* 此行不能注释，下一行ES6模板字符串需要用到！！ */
-        this.$message.warning(eval('`' + this.i18nt('render.hint.uploadExceed') + '`'));
-      },
-
-      updateUploadFieldModelAndEmitDataChange(fileList) {
-        let oldValue = deepClone(this.fieldModel)
-        this.fieldModel = deepClone(fileList)
-        this.syncUpdateFormModel(this.fieldModel)
-        this.emitFieldDataChange(this.fieldModel, oldValue)
+        let uploadLimit = this.field.options.limit
+        this.$message.warning( this.i18nt('render.hint.uploadExceed').replace('${uploadLimit}', uploadLimit) )
       },
 
       beforePictureUpload(file) {
@@ -162,23 +191,66 @@
         return true
       },
 
+      updateFieldModelAndEmitDataChangeForUpload(fileList, customResult, defaultResult) {
+        let oldValue = deepClone(this.fieldModel)
+        if (!!customResult && !!customResult.name && !!customResult.url) {
+          this.fieldModel.push({
+            name: customResult.name,
+            url: customResult.url
+          })
+        } else if (!!defaultResult && !!defaultResult.name && !!defaultResult.url) {
+          this.fieldModel.push({
+            name: defaultResult.name,
+            url: defaultResult.url
+          })
+        } else {
+          this.fieldModel = deepClone(fileList)
+        }
+
+        this.syncUpdateFormModel(this.fieldModel)
+        this.emitFieldDataChange(this.fieldModel, oldValue)
+      },
+
       handlePictureUpload(res, file, fileList) {
         if (file.status === 'success') {
-          //this.fileList.push(file)  /* 上传过程中，this.fileList是只读的，不能修改赋值!! */
-          this.updateUploadFieldModelAndEmitDataChange(fileList)
-          this.fileList = deepClone(fileList)
-          this.uploadBtnHidden = fileList.length >= this.field.options.limit
-
+          let customResult = null
           if (!!this.field.options.onUploadSuccess) {
             let customFn = new Function('result', 'file', 'fileList', this.field.options.onUploadSuccess)
-            customFn.call(this, res, file, fileList)
+            customResult = customFn.call(this, res, file, fileList)
           }
+
+          this.updateFieldModelAndEmitDataChangeForUpload(fileList, customResult, res)
+          this.fileList = deepClone(fileList)
+          this.uploadBtnHidden = fileList.length >= this.field.options.limit
         }
       },
 
-      handlePictureRemove(file, fileList) {
-        this.fileList = deepClone(fileList)  //this.fileList = fileList
-        this.updateUploadFieldModelAndEmitDataChange(fileList)
+      updateFieldModelAndEmitDataChangeForRemove(file) {
+        let oldValue = deepClone(this.fieldModel)
+        let foundFileIdx = -1
+        this.fileListBeforeRemove.map((fi, idx) => {  /* 跟element-ui不同，element-plus删除文件时this.fileList数组对应元素已被删除！！ */
+          if ((fi.name === file.name) && ((fi.url === file.url) || (!!fi.uid && fi.uid === file.uid))) {  /* 这个判断有问题？？ */
+            foundFileIdx = idx
+          }
+        })
+        if (foundFileIdx > -1) {
+          this.fieldModel.splice(foundFileIdx, 1)
+        }
+
+        this.syncUpdateFormModel(this.fieldModel)
+        this.emitFieldDataChange(this.fieldModel, oldValue)
+      },
+
+      handleBeforeRemove(fileList) {
+        /* 保留删除之前的文件列表！！ */
+        this.fileListBeforeRemove = deepClone(fileList)
+      },
+
+      handlePictureRemove(file) {
+        this.handleBeforeRemove(this.fileList) // 由于自定义了 #file slot，需要手动调用 handleBeforeRemove，并移除 @before-remove 和 @remove
+        this.fileList.splice(this.fileList.indexOf(file), 1) // 删除所点击的文件
+        this.updateFieldModelAndEmitDataChangeForRemove(file)
+        let fileList = deepClone(this.fileList); // 进行深拷贝，避免用户自定义函数对 fileList 进行修改时，影响组件内的数据
         this.uploadBtnHidden = fileList.length >= this.field.options.limit
 
         if (!!this.field.options.onFileRemove) {
@@ -187,7 +259,7 @@
         }
       },
 
-      handelUploadError(err, file, fileList) {
+      handleUploadError(err, file, fileList) {
         if (!!this.field.options.onUploadError) {
           let customFn = new Function('error', 'file', 'fileList', this.field.options.onUploadError)
           customFn.call(this, err, file, fileList)
@@ -199,6 +271,13 @@
           })
         }
       },
+
+      handlePictureCardPreview({ url }) {
+        // 设置图片索引为当前点击的图片
+        this.previewIndex = this.previewList.indexOf(url)
+        // 模拟点击 <el-image> 组件下的 img 标签（点击事件被绑定在的每张 img 上）
+        this.$refs['imageRef'].$el.children[0].click()
+      }
 
     }
   }
@@ -235,3 +314,5 @@
   }
 
 </style>
+
+

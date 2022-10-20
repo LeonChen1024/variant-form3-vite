@@ -233,7 +233,10 @@ export default {
       }
 
       if (!!this.field.options.onValidate) {
-        let customFn = new Function('rule', 'value', 'callback', this.field.options.onValidate)
+        let customFn = (rule, value, callback) => {
+          let tmpFunc =  new Function('rule', 'value', 'callback', this.field.options.onValidate)
+          return tmpFunc.call(this, rule, value, callback)
+        }
         this.rules.push({
           validator: customFn,
           trigger: ['blur', 'change'],
@@ -313,7 +316,9 @@ export default {
       if (!!this.subFormItemFlag) {
         let subFormData = this.formModel[this.subFormName] || [{}]
         let subFormDataRow = subFormData[this.subFormRowIndex]
-        subFormDataRow[this.field.options.name] = value
+        if (!!subFormDataRow) { // 重置表单后subFormDataRow为undefined，应跳过！！
+          subFormDataRow[this.field.options.name] = value
+        }
       } else {
         this.formModel[this.field.options.name] = value
       }
@@ -359,8 +364,17 @@ export default {
     },
 
     emitAppendButtonClick() {
-      /* 必须调用mixins中的dispatch方法逐级向父组件发送消息！！ */
-      this.dispatch('VFormRender', 'appendButtonClick', [this]);
+      if (!!this.designState) { //设计状态不触发点击事件
+        return
+      }
+
+      if (!!this.field.options.onAppendButtonClick) {
+        let customFn = new Function(this.field.options.onAppendButtonClick)
+        customFn.call(this)
+      } else {
+        /* 必须调用mixins中的dispatch方法逐级向父组件发送消息！！ */
+        this.dispatch('VFormRender', 'appendButtonClick', [this])
+      }
     },
 
     handleOnChange(val, oldVal) {  //自定义onChange事件
@@ -543,6 +557,14 @@ export default {
       this.enableOptionOfList(this.field.options.optionItems, optionValue)
     },
 
+    /**
+     * 返回选择项
+     * @returns {*}
+     */
+    getOptionItems() {
+      return this.field.options.optionItems
+    },
+
     setUploadHeader(name, value) {
       this.uploadHeaders[name] = value
     },
@@ -553,6 +575,46 @@ export default {
 
     setToolbar(customToolbar) {
       this.customToolbar = customToolbar
+    },
+
+    /**
+     * 是否子表单内嵌的组件
+     * @returns {boolean}
+     */
+    isSubFormItem() {
+      return !!this.parentWidget ? this.parentWidget.type === 'sub-form' : false
+    },
+
+    /**
+     * 动态增加自定义css样式
+     * @param className
+     */
+    addCssClass(className) {
+      if (!this.field.options.customClass) {
+        this.field.options.customClass = [className]
+      } else {
+        this.field.options.customClass.push(className)
+      }
+    },
+
+    /**
+     * 动态移除自定义css样式
+     * @param className
+     */
+    removeCssClass(className) {
+      if (!this.field.options.customClass) {
+        return
+      }
+
+      let foundIdx = -1
+      this.field.options.customClass.map((cc, idx) => {
+        if (cc === className) {
+          foundIdx = idx
+        }
+      })
+      if (foundIdx > -1) {
+        this.field.options.customClass.splice(foundIdx, 1)
+      }
     },
 
     //--------------------- 以上为组件支持外部调用的API方法 end ------------------//

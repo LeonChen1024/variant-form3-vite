@@ -210,6 +210,8 @@ export default {
       automaticDropdown: '自动弹出选项',
       multiple: '选项可多选',
       multipleLimit: '多选数量限制',
+      checkStrictly: '任意级节点可选',
+      showAllLevels: '显示完整路径',
       contentPosition: '文字位置',
       plain: '朴素按钮',
       round: '圆角按钮',
@@ -319,6 +321,7 @@ export default {
       formModelName: '数据对象名称',
       formRefName: '引用名称',
       formRulesName: '验证规则名称',
+      syntaxCheckWarning: 'JS代码存在语法错误，请仔细检查！',
 
     }
 

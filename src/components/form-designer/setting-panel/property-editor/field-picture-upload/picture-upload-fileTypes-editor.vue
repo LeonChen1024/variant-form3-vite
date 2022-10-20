@@ -21,7 +21,7 @@
   import i18n from "@/utils/i18n"
 
   export default {
-    name: "fileTypes-editor",
+    name: "picture-upload-fileTypes-editor",
     mixins: [i18n],
     props: {
       designer: Object,
@@ -31,7 +31,8 @@
     data() {
       return {
         uploadPictureTypes: [
-          {value: 'jpeg', label: 'jpg'}, /* label如用大写字母，选择两个文件类型就会导致设置面板快速抖动、闪烁，非常奇怪！！ */
+          {value: 'jpg', label: 'jpg'}, /* label如用大写字母，选择两个文件类型就会导致设置面板快速抖动、闪烁，非常奇怪！！ */
+          {value: 'jpeg', label: 'jpeg'},
           {value: 'png', label: 'png'},
           {value: 'gif', label: 'gif'},
         ],

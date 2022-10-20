@@ -142,6 +142,7 @@ export const basicFields = [
       onFocus: '',
       onBlur: '',
       onValidate: '',
+      onAppendButtonClick: '',
     },
   },
 
@@ -702,6 +703,7 @@ export const basicFields = [
       label: '',
       columnWidth: '200px',
       size: '',
+      displayStyle: 'block',
       disabled: false,
       hidden: false,
       type: '',
@@ -749,8 +751,10 @@ export const advancedFields = [
     options: {
       name: '',
       label: '',
+      labelAlign: '',
       labelWidth: null,
       labelHidden: false,
+      columnWidth: '200px',
       disabled: false,
       hidden: false,
       required: false,
@@ -765,7 +769,7 @@ export const advancedFields = [
       showFileList: true,
       limit: 3,
       fileMaxSize: 5, //MB
-      fileTypes: ['jpeg', 'png'],
+      fileTypes: ['jpg', 'jpeg', 'png'],
       //headers: [],
       //-------------------
       customClass: '',  //自定义css类名
@@ -792,8 +796,10 @@ export const advancedFields = [
     options: {
       name: '',
       label: '',
+      labelAlign: '',
       labelWidth: null,
       labelHidden: false,
+      columnWidth: '200px',
       disabled: false,
       hidden: false,
       required: false,
@@ -834,9 +840,11 @@ export const advancedFields = [
     options: {
       name: '',
       label: '',
+      labelAlign: '',
       placeholder: '',
       labelWidth: null,
       labelHidden: false,
+      columnWidth: '200px',
       contentHeight: '200px',
       disabled: false,
       hidden: false,
@@ -866,15 +874,20 @@ export const advancedFields = [
     options: {
       name: '',
       label: '',
+      labelAlign: '',
       defaultValue: '',
       placeholder: '',
       size: '',
       labelWidth: null,
       labelHidden: false,
+      columnWidth: '200px',
       disabled: false,
       hidden: false,
       clearable: true,
       filterable: false,
+      multiple: false,
+      checkStrictly: false,  //可选择任意一级选项，默认不开启
+      showAllLevels: true,  //显示完整路径
       optionItems: [
         {label: 'select 1', value: 1, children: [{label: 'child 1', value: 11}]},
         {label: 'select 2', value: 2},
@@ -898,17 +911,6 @@ export const advancedFields = [
       onValidate: '',
     },
   },
-
-  // {
-  //   type: 'slot',
-  //   icon: 'slot-field',
-  //   formItemFlag: false,
-  //   options: {
-  //     name: '',
-  //     label: '',
-  //     customClass: '',  //自定义css类名
-  //   }
-  // },
 
 ]
 

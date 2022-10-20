@@ -23,33 +23,35 @@
                icon-class="el-icon-arrow-right" @node-click="onNodeTreeClick"></el-tree>
     </el-drawer>
 
-    <div class="right-toolbar">
-      <el-button v-if="showToolButton('clearDesignerButton')" type="text" @click="clearFormWidget">
-        <svg-icon icon-class="el-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
-      <el-button v-if="showToolButton('previewFormButton')" type="text" @click="previewForm">
-        <svg-icon icon-class="el-view" />{{i18nt('designer.toolbar.preview')}}</el-button>
-      <el-button v-if="showToolButton('importJsonButton')" type="text" @click="importJson">
-        {{i18nt('designer.toolbar.importJson')}}</el-button>
-      <el-button v-if="showToolButton('exportJsonButton')" type="text" @click="exportJson">
-        {{i18nt('designer.toolbar.exportJson')}}</el-button>
-      <el-button v-if="showToolButton('exportCodeButton')" type="text" @click="exportCode">
-        {{i18nt('designer.toolbar.exportCode')}}</el-button>
-      <el-button v-if="showToolButton('generateSFCButton')" type="text" @click="generateSFC">
-        <svg-icon icon-class="vue-sfc" />{{i18nt('designer.toolbar.generateSFC')}}</el-button>
-      <template v-for="(idx, slotName) in $slots">
-        <slot :name="slotName"></slot>
-      </template>
+    <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
+      <div class="right-toolbar-con">
+        <el-button v-if="showToolButton('clearDesignerButton')" type="text" @click="clearFormWidget">
+          <svg-icon icon-class="el-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
+        <el-button v-if="showToolButton('previewFormButton')" type="text" @click="previewForm">
+          <svg-icon icon-class="el-view" />{{i18nt('designer.toolbar.preview')}}</el-button>
+        <el-button v-if="showToolButton('importJsonButton')" type="text" @click="importJson">
+          {{i18nt('designer.toolbar.importJson')}}</el-button>
+        <el-button v-if="showToolButton('exportJsonButton')" type="text" @click="exportJson">
+          {{i18nt('designer.toolbar.exportJson')}}</el-button>
+        <el-button v-if="showToolButton('exportCodeButton')" type="text" @click="exportCode">
+          {{i18nt('designer.toolbar.exportCode')}}</el-button>
+        <el-button v-if="showToolButton('generateSFCButton')" type="text" @click="generateSFC">
+          <svg-icon icon-class="vue-sfc" />{{i18nt('designer.toolbar.generateSFC')}}</el-button>
+        <template v-for="(idx, slotName) in $slots">
+          <slot :name="slotName"></slot>
+        </template>
+      </div>
     </div>
 
     <div v-if="showPreviewDialogFlag" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
       <el-dialog :title="i18nt('designer.toolbar.preview')" v-model="showPreviewDialogFlag"
                  :show-close="true" :close-on-click-modal="false" :close-on-press-escape="false" center
-                 :destroy-on-close="true" custom-class="drag-dialog small-padding-dialog" width="75%"
+                 :destroy-on-close="true" :append-to-body="true" custom-class="drag-dialog small-padding-dialog" width="75%"
                  :fullscreen="(layoutType === 'H5') || (layoutType === 'Pad')">
         <div>
           <div class="form-render-wrapper" :class="[layoutType === 'H5' ? 'h5-layout' : (layoutType === 'Pad' ? 'pad-layout' : '')]">
             <VFormRender ref="preForm" :form-json="formJson" :form-data="testFormData" :preview-state="true"
-                         :option-data="testOptionData"
+                         :option-data="testOptionData"  @myEmitTest="onMyEmitTest"
                          @appendButtonClick="testOnAppendButtonClick" @buttonClick="testOnButtonClick"
                          @formChange="handleFormChange">
             </VFormRender>
@@ -63,6 +65,9 @@
             <el-button type="primary" @click="setFormEnabled">{{i18nt('designer.hint.enableForm')}}</el-button>
             <el-button @click="showPreviewDialogFlag = false">{{i18nt('designer.hint.closePreview')}}</el-button>
             <el-button v-if="false" @click="testLoadForm">Test Load</el-button>
+            <el-button v-if="false" @click="testSetFormJson">Test SFJ</el-button>
+            <el-button v-if="false" @click="testSetFormData">Test SFD</el-button>
+            <el-button v-if="false" @click="testReloadOptionData">Test ROD</el-button>
           </div>
         </template>
       </el-dialog>
@@ -188,12 +193,12 @@
     copyToClipboard,
     generateId,
     getQueryParam,
-    traverseAllWidgets
-  } from "@/utils/util";
+    traverseAllWidgets, addWindowResizeHandler
+  } from "@/utils/util"
   import i18n from '@/utils/i18n'
-  import {generateCode} from "@/utils/code-generator";
-  import {genSFC} from "@/utils/sfc-generator";
-  import loadBeautifier from "@/utils/beautifierLoader";
+  import {generateCode} from "@/utils/code-generator"
+  import {genSFC} from "@/utils/sfc-generator"
+  import loadBeautifier from "@/utils/beautifierLoader"
   import { saveAs } from 'file-saver'
   import axios from 'axios'
 
@@ -213,6 +218,7 @@
       return {
         designerConfig: this.getDesignerConfig(),
 
+        toolbarWidth: 420,
         showPreviewDialogFlag: false,
         showImportJsonDialogFlag: false,
         showExportJsonDialogFlag: false,
@@ -253,7 +259,13 @@
             {label: '01', value: 1},
             {label: '22', value: 2},
             {label: '333', value: 3},
-          ]
+          ],
+
+          'select001': [
+            {label: '辣椒', value: 1},
+            {label: '菠萝', value: 2},
+            {label: '丑橘子', value: 3},
+          ],
         },
 
       }
@@ -261,8 +273,11 @@
     computed: {
       formJson() {
         return {
-          widgetList: this.designer.widgetList,
-          formConfig: this.designer.formConfig
+          // widgetList: this.designer.widgetList,
+          // formConfig: this.designer.formConfig
+
+          widgetList: deepClone(this.designer.widgetList),
+          formConfig: deepClone(this.designer.formConfig)
         }
       },
 
@@ -288,7 +303,18 @@
         }
       },
 
-
+    },
+    mounted() {
+      let maxTBWidth = this.designerConfig.toolbarMaxWidth || 420
+      let minTBWidth = this.designerConfig.toolbarMinWidth || 300
+      let newTBWidth = window.innerWidth - 260 - 300 - 320 - 80
+      this.toolbarWidth = newTBWidth >= maxTBWidth ? maxTBWidth : (newTBWidth <= minTBWidth ? minTBWidth : newTBWidth)
+      addWindowResizeHandler(() => {
+        this.$nextTick(() => {
+          let newTBWidth2 = window.innerWidth - 260 - 300 - 320 - 80
+          this.toolbarWidth = newTBWidth2 >= maxTBWidth ? maxTBWidth : (newTBWidth2 <= minTBWidth ? minTBWidth : newTBWidth2)
+        })
+      })
     },
     methods: {
       showToolButton(configName) {
@@ -612,6 +638,30 @@
         })
       },
 
+      testSetFormJson() {
+        let newFormJson = {"widgetList":[{"type":"static-text","icon":"static-text","formItemFlag":false,"options":{"name":"statictext111193","columnWidth":"200px","hidden":false,"textContent":"多列表单","customClass":[],"onCreated":"","onMounted":"","label":"static-text"},"id":"statictext111193"},{"type":"divider","icon":"divider","formItemFlag":false,"options":{"name":"divider102346","label":"","columnWidth":"200px","direction":"horizontal","contentPosition":"center","hidden":false,"customClass":[],"onCreated":"","onMounted":""},"id":"divider102346"},{"type":"grid","category":"container","icon":"grid","cols":[{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"input","icon":"text-field","formItemFlag":true,"options":{"name":"input12931","label":"发件人姓名","labelAlign":"","type":"text","defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"showPassword":false,"required":true,"validation":"","validationHint":"","customClass":[],"labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"prefixIcon":"","suffixIcon":"","appendButton":false,"appendButtonDisabled":false,"buttonIcon":"el-icon-search","onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"input12931"}],"options":{"name":"gridCol25469","hidden":false,"span":12,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":[]},"id":"grid-col-25469"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"input","icon":"text-field","formItemFlag":true,"options":{"name":"input23031","label":"发件人号码","labelAlign":"","type":"text","defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"showPassword":false,"required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"prefixIcon":"","suffixIcon":"","appendButton":false,"appendButtonDisabled":false,"buttonIcon":"el-icon-search","onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"input23031"}],"options":{"name":"gridCol25125","hidden":false,"span":12,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-25125"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"switch","icon":"switch-field","formItemFlag":true,"options":{"name":"switch96070","label":"是否保密","labelAlign":"","defaultValue":true,"columnWidth":"200px","labelWidth":null,"labelHidden":false,"disabled":false,"hidden":false,"customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"switchWidth":40,"activeText":"","inactiveText":"","activeColor":null,"inactiveColor":null,"onCreated":"","onMounted":"","onChange":"","onValidate":""},"id":"switch96070"}],"options":{"name":"gridCol44470","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-44470"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"textarea","icon":"textarea-field","formItemFlag":true,"options":{"name":"textarea21654","label":"发件人地址","labelAlign":"","rows":3,"defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"textarea21654"}],"options":{"name":"gridCol98223","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-98223"}],"options":{"name":"grid35834","hidden":false,"gutter":12,"customClass":""},"id":"grid35834"},{"type":"divider","icon":"divider","formItemFlag":false,"options":{"name":"divider69240","label":"","columnWidth":"200px","direction":"horizontal","contentPosition":"center","hidden":false,"customClass":"","onCreated":"","onMounted":""},"id":"divider69240"},{"type":"grid","category":"container","icon":"grid","cols":[{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"input","icon":"text-field","formItemFlag":true,"options":{"name":"input113152","label":"收件人姓名111","labelAlign":"","type":"text","defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"showPassword":false,"required":true,"validation":"","validationHint":"","customClass":[],"labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"prefixIcon":"","suffixIcon":"","appendButton":false,"appendButtonDisabled":false,"buttonIcon":"el-icon-search","onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"input113152"}],"options":{"name":"gridCol47242","hidden":false,"span":12,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-47242"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"input","icon":"text-field","formItemFlag":true,"options":{"name":"input40240","label":"收件人号码","labelAlign":"","type":"text","defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"showPassword":false,"required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"prefixIcon":"","suffixIcon":"","appendButton":false,"appendButtonDisabled":false,"buttonIcon":"el-icon-search","onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"input40240"}],"options":{"name":"gridCol27970","hidden":false,"span":12,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-27970"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"checkbox","icon":"checkbox-field","formItemFlag":true,"options":{"name":"checkbox63174","label":"接收时间段","labelAlign":"","defaultValue":[],"columnWidth":"200px","size":"","displayStyle":"inline","buttonStyle":false,"border":false,"labelWidth":null,"labelHidden":false,"disabled":false,"hidden":false,"optionItems":[{"label":"上午9:00 - 11:30","value":1},{"label":"下午12:30 - 18:00","value":2},{"label":"晚上18:00 - 21:00","value":3}],"required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"onCreated":"","onMounted":"","onChange":"","onValidate":""},"id":"checkbox63174"}],"options":{"name":"gridCol74653","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-74653"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"input","icon":"text-field","formItemFlag":true,"options":{"name":"input78584","label":"收件人地址","labelAlign":"","type":"text","defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"showPassword":false,"required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"prefixIcon":"","suffixIcon":"","appendButton":false,"appendButtonDisabled":false,"buttonIcon":"el-icon-search","onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"input78584"}],"options":{"name":"gridCol63781","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-63781"}],"options":{"name":"grid114672","hidden":false,"gutter":12,"customClass":""},"id":"grid114672"},{"type":"divider","icon":"divider","formItemFlag":false,"options":{"name":"divider75887","label":"","columnWidth":"200px","direction":"horizontal","contentPosition":"center","hidden":false,"customClass":[],"onCreated":"","onMounted":""},"id":"divider75887"},{"type":"grid","category":"container","icon":"grid","cols":[{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"time-range","icon":"time-range-field","formItemFlag":true,"options":{"name":"timerange47503","label":"送货时间","labelAlign":"","defaultValue":null,"startPlaceholder":"","endPlaceholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"clearable":true,"editable":false,"format":"HH:mm:ss","required":true,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"onCreated":"","onMounted":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"timerange47503"}],"options":{"name":"gridCol109912","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-109912"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"slider","icon":"slider-field","formItemFlag":true,"options":{"name":"slider54714","label":"价格保护","labelAlign":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"disabled":false,"hidden":false,"required":false,"validation":"","validationHint":"","customClass":[],"labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"min":0,"max":100,"step":10,"range":false,"height":null,"onCreated":"","onMounted":"","onChange":"","onValidate":"","showStops":true},"id":"slider54714"}],"options":{"name":"gridCol114653","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-114653"},{"type":"grid-col","category":"container","icon":"grid-col","internal":true,"widgetList":[{"type":"textarea","icon":"textarea-field","formItemFlag":true,"options":{"name":"textarea64794","label":"其他信息","labelAlign":"","rows":3,"defaultValue":"","placeholder":"","columnWidth":"200px","size":"","labelWidth":null,"labelHidden":false,"readonly":false,"disabled":false,"hidden":false,"required":false,"validation":"","validationHint":"","customClass":"","labelIconClass":null,"labelIconPosition":"rear","labelTooltip":null,"minLength":null,"maxLength":null,"showWordLimit":false,"onCreated":"","onMounted":"","onInput":"","onChange":"","onFocus":"","onBlur":"","onValidate":""},"id":"textarea64794"}],"options":{"name":"gridCol80867","hidden":false,"span":24,"offset":0,"push":0,"pull":0,"responsive":false,"md":12,"sm":12,"xs":12,"customClass":""},"id":"grid-col-80867"}],"options":{"name":"grid28709","hidden":false,"gutter":12,"customClass":""},"id":"grid28709"}],"formConfig":{"modelName":"formData","refName":"vForm","rulesName":"rules","labelWidth":150,"labelPosition":"left","size":"","labelAlign":"label-right-align","cssCode":"","customClass":[],"functions":"","layoutType":"PC","jsonVersion":3,"onFormCreated":"","onFormMounted":"","onFormDataChange":"","onFormValidate":""}}
+        this.$refs.preForm.setFormJson(newFormJson)
+        this.$nextTick(() => {
+          this.$refs.preForm.setFormData({"input12931":"asdf"})
+        })
+      },
+
+      testSetFormData() {
+        let testFD = {
+          "input89263": "899668"
+        }
+        this.$refs.preForm.setFormData(testFD)
+      },
+
+      testReloadOptionData() {
+        this.testOptionData['select001'].push({
+          label: 'aaa',
+          value: 888
+        })
+
+        this.$refs.preForm.reloadOptionData()
+      },
+
       handleFormChange(fieldName, newValue, oldValue, formModel) {
         /*
         console.log('---formChange start---')
@@ -621,6 +671,8 @@
         console.log('formModel', formModel)
         console.log('---formChange end---')
         */
+
+        console.log('formModel', formModel)
       },
 
       testOnAppendButtonClick(clickedWidget) {
@@ -629,6 +681,10 @@
 
       testOnButtonClick(button) {
         console.log('test', button)
+      },
+
+      onMyEmitTest(aaa) {
+        console.log('-----', aaa)
       },
 
       findWidgetById(wId) {
@@ -662,7 +718,8 @@
 
 <style lang="scss" scoped>
   div.toolbar-container {
-    min-width: 728px;  /* 解决工具按钮栏换行的问题！！ */
+    //min-width: 728px;  /* 解决工具按钮栏换行的问题！！ */
+    /* 上一行css有问题，当窗口宽度不足时会把按钮挤出到右边的属性设置区，弃之！ */
   }
 
   .left-toolbar {
@@ -676,9 +733,25 @@
     display: flex;
     margin-top: 5px;
     float: right;
+    text-align: right;
+    overflow: hidden;
+
+    .right-toolbar-con {
+      text-align: left;
+      width: 600px;
+    }
+
+    :deep(.el-button) {
+      margin-left: 10px;
+    }
 
     :deep(.el-button--text) {
       font-size: 14px !important;
+    }
+
+    :deep(.svg-icon) {
+      margin-left: 0;
+      margin-right: 0.05em;
     }
   }
 
@@ -734,6 +807,8 @@
     //border-width: 10px;
     box-shadow: 0 0 1px 10px #495060;
     height: calc(100vh - 175px);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .form-render-wrapper.pad-layout {
@@ -743,6 +818,8 @@
     //border-width: 10px;
     box-shadow: 0 0 1px 10px #495060;
     height: calc(100vh - 175px);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .node-tree-drawer {

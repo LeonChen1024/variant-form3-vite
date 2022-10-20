@@ -6,30 +6,13 @@
  * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
  */
 
-import {deepClone, generateId, overwriteObj} from "@/utils/util"
+import {deepClone, generateId, getDefaultFormConfig, overwriteObj} from "@/utils/util"
 import {containers, advancedFields, basicFields, customFields} from "@/components/form-designer/widget-panel/widgetsConfig.js"
 import {VARIANT_FORM_VERSION} from "@/utils/config"
 import eventBus from "@/utils/event-bus"
 
 export function createDesigner(vueInstance) {
-  let defaultFormConfig = {
-    modelName: 'formData',
-    refName: 'vForm',
-    rulesName: 'rules',
-    labelWidth: 80,
-    labelPosition: 'left',
-    size: '',
-    labelAlign: 'label-left-align',
-    cssCode: '',
-    customClass: '',
-    functions: '',
-    layoutType: 'PC',
-    jsonVersion: 3,
-
-    onFormCreated: '',
-    onFormMounted: '',
-    onFormDataChange: '',
-  }
+  let defaultFormConfig = deepClone( getDefaultFormConfig() )
 
   return {
     widgetList: [],
@@ -55,7 +38,7 @@ export function createDesigner(vueInstance) {
       this.formConfig = deepClone(defaultFormConfig)
 
       //输出版本信息和语雀链接
-      console.info(`%cVariantForm %cVer${VARIANT_FORM_VERSION} %chttps://www.yuque.com/variantdev/vform`,
+      console.info(`%cVariantForm %cVer${VARIANT_FORM_VERSION} %chttps://www.yuque.com/visualdev/vform3`,
           "color:#409EFF;font-size: 22px;font-weight:bolder",
           "color:#999;font-size: 12px",
           "color:#333"
@@ -100,7 +83,8 @@ export function createDesigner(vueInstance) {
     getImportTemplate() {
       return {
         widgetList: [],
-        formConfig: deepClone(this.formConfig)
+        // formConfig: deepClone(this.formConfig)
+        formConfig: deepClone(defaultFormConfig)
       }
     },
 
@@ -115,6 +99,10 @@ export function createDesigner(vueInstance) {
         //this.formConfig = importObj.formConfig
         overwriteObj(this.formConfig, formJson.formConfig)  /* 用=赋值，会导致inject依赖注入的formConfig属性变成非响应式 */
         modifiedFlag = true
+      }
+
+      if (modifiedFlag) {
+        this.emitEvent('form-json-imported', [])  // 通知其他组件
       }
 
       return modifiedFlag
@@ -133,9 +121,8 @@ export function createDesigner(vueInstance) {
       }
     },
 
-    updateSelectedWidgetNameAndRef(selectedWidget, newName, newLabel) {
+    updateSelectedWidgetNameAndLabel(selectedWidget, newName, newLabel) {
       this.selectedWidgetName = newName
-      //selectedWidget.options.name = newName  //此行多余
       if (!!newLabel && (Object.keys(selectedWidget.options).indexOf('label') > -1)) {
         selectedWidget.options.label = newLabel
       }
@@ -636,6 +623,33 @@ export function createDesigner(vueInstance) {
       }
 
       return Object.keys(originalWidget.options).indexOf(configName) > -1
+    },
+
+    upgradeWidgetConfig(oldWidget) {
+      let newWidget = null
+      if (!!oldWidget.category) {
+        newWidget = this.getContainerByType(oldWidget.type)
+      } else {
+        newWidget = this.getFieldWidgetByType(oldWidget.type)
+      }
+
+      if (!newWidget || !newWidget.options) {
+        return
+      }
+
+      Object.keys(newWidget.options).forEach(ck => {
+        if (!oldWidget.hasOwnProperty(ck)) {
+          oldWidget.options[ck] = deepClone(newWidget.options[ck])
+        }
+      })
+    },
+
+    upgradeFormConfig(oldFormConfig) {
+      Object.keys(this.formConfig).forEach(fc => {
+        if (!oldFormConfig.hasOwnProperty(fc)) {
+          oldFormConfig[fc] = deepClone(this.formConfig[fc])
+        }
+      })
     },
 
     cloneGridCol(widget, parentWidget) {

@@ -8,6 +8,12 @@
 ### 立即体验VForm 3
 [在线Demo](http://120.92.142.115:81/vform3/)
  
+ ### 立即体验VForm 3 Pro高级版（提供商业支持）
+ [VForm 3 Pro Demo](http://120.92.142.115:81/vform3pro/)
+ 
+### 适合Vue 2的版本看这里
+[点此查看](https://gitee.com/vdpadmin/variant-form)
+ 
 ### 友情链接
 [Fantastic-admin](https://hooray.gitee.io/fantastic-admin/) —— 一款开箱即用的 Vue 中后台管理系统框架（支持Vue2/Vue3）
  
@@ -157,8 +163,10 @@ Github仓库：<a href="https://github.com/vform666/variant-form3-vite" target="
 
 Gitee仓库：<a href="https://gitee.com/vdpadmin/variant-form3-vite" target="_blank">https://gitee.com/vdpadmin/variant-form3-vite</a>
 
-更新日志：<a href="https://www.vform666.com/pages/changelog/" target="_blank">https://www.vform666.com/pages/changelog/</a>
+更新日志：<a href="https://www.vform666.com/changelog.html" target="_blank">https://www.vform666.com/changelog.html</a>
 
-技术交流群：微信搜索“vformAdmin”，或者扫如下二维码加群
+订阅Pro版：<a href="https://www.vform666.com/pages/pro/" target="_blank">https://www.vform666.com/pages/pro/</a>
 
-![image](https://ks3-cn-beijing.ksyuncs.com/vform-static/img/vx-qrcode-242.png)
+技术交流群：扫如下二维码加群
+
+![image](https://vform2022.ks3-cn-beijing.ksyuncs.com/vchat_qrcode.png)

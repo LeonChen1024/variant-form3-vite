@@ -38,10 +38,10 @@
       <el-row v-for="(subFormRowId, sfrIdx) in rowIdData" class="sub-form-row" :key="subFormRowId">
         <div class="sub-form-action-column hide-label">
           <div class="action-button-column">
-            <el-button :disabled="actionDisabled" circle icon="el-icon-circle-plus-outline" @click="insertSubFormRow(sfrIdx)"
-                       :title="i18nt('render.hint.insertSubFormRow')"></el-button>
-            <el-button :disabled="actionDisabled" circle icon="el-icon-delete" @click="deleteSubFormRow(sfrIdx)"
-                       :title="i18nt('render.hint.deleteSubFormRow')"></el-button>
+            <el-button :disabled="actionDisabled" circle @click="insertSubFormRow(sfrIdx)"
+                       :title="i18nt('render.hint.insertSubFormRow')"><svg-icon icon-class="el-plus" /></el-button>
+            <el-button :disabled="actionDisabled" circle @click="deleteSubFormRow(sfrIdx)"
+                       :title="i18nt('render.hint.deleteSubFormRow')"><svg-icon icon-class="el-delete" /></el-button>
             <span v-if="widget.options.showRowNumber" class="row-number-span">#{{sfrIdx+1}}</span>
           </div>
         </div>
@@ -148,6 +148,11 @@
 
       getRowIdData() {
         return this.rowIdData
+      },
+
+      getWidgetRefOfSubForm(widgetName, rowIndex) {
+        let realWidgetName = widgetName + '@row' + this.rowIdData[rowIndex]
+        return this.getWidgetRef(realWidgetName)
       },
 
       initFieldSchemaData() {  //初始化fieldSchemaData！！！
@@ -264,7 +269,7 @@
           this.deleteFromRowIdData(formRowIndex)
           this.deleteFromFieldSchemaData(formRowIndex)
 
-          this.handelSubFormRowDelete(oldSubFormData, deletedDataRow)
+          this.handleSubFormRowDelete(oldSubFormData, deletedDataRow)
           this.handleSubFormRowChange(oldSubFormData)
         }).catch(() => {
           //
@@ -292,7 +297,7 @@
         }
       },
 
-      handelSubFormRowDelete(subFormData, deletedDataRow) {
+      handleSubFormRowDelete(subFormData, deletedDataRow) {
         if (!!this.widget.options.onSubFormRowDelete) {
           let customFunc = new Function('subFormData', 'deletedDataRow', this.widget.options.onSubFormRowDelete)
           customFunc.call(this, subFormData, deletedDataRow)
@@ -374,7 +379,7 @@
     }
 
     :deep(.el-button) {
-      font-size: 18px;
+      font-size: 14px;
       padding: 0;
       background: #DCDFE6;
       border: 4px solid #DCDFE6;
