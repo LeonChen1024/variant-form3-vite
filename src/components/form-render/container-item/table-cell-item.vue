@@ -1,10 +1,10 @@
 <template>
   <td class="table-cell" :class="[customClass]"
       :colspan="widget.options.colspan || 1" :rowspan="widget.options.rowspan || 1"
-      :style="{width: widget.options.cellWidth + ' !important' || '', height: widget.options.cellHeight + ' !important' || ''}">
+      :style="{width: widget.options.cellWidth + ' !important' || '', height: widget.options.cellHeight + ' !important' || '', 'word-break': !!widget.options.wordBreak ? 'break-all' : 'normal'}">
     <template v-for="(subWidget, swIdx) in widget.widgetList">
       <template v-if="'container' === subWidget.category">
-        <component :is="subWidget.type + '-item'" :widget="subWidget" :key="swIdx" :parent-list="widget.widgetList"
+        <component :is="getComponentByContainer(subWidget)" :widget="subWidget" :key="swIdx" :parent-list="widget.widgetList"
                         :index-of-parent-list="swIdx" :parent-widget="widget">
           <!-- 递归传递插槽！！！ -->
           <template v-for="slot in Object.keys($slots)" v-slot:[slot]="scope">

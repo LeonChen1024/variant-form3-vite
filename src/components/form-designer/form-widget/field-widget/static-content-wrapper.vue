@@ -29,11 +29,15 @@
 </template>
 
 <script>
-  import i18n from "@/utils/i18n";
+  import i18n from "@/utils/i18n"
+  import SvgIcon from '@/components/svg-icon'
 
   export default {
     name: "static-content-wrapper",
     mixins: [i18n],
+    components: {
+      SvgIcon
+    },
     props: {
       field: Object,
       designer: Object,
@@ -103,6 +107,7 @@
 
       removeFieldWidget() {
         if (!!this.parentList) {
+          const fieldRefName = this.designer.selectedWidgetName
           let nextSelected = null
           if (this.parentList.length === 1) {
             if (!!this.parentWidget) {
@@ -116,10 +121,9 @@
 
           this.$nextTick(() => {
             this.parentList.splice(this.indexOfParentList, 1)
-            //if (!!nextSelected) {
             this.designer.setSelected(nextSelected)
-            //}
 
+            this.designer.formWidget.deleteWidgetRef(fieldRefName)  //删除组件ref！！！
             this.designer.emitHistoryChange()
           })
         }

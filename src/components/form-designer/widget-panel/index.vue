@@ -77,7 +77,7 @@
             </el-popover>
             <div class="bottom clear-fix">
               <span class="ft-title">#{{idx+1}} {{ft.title}}</span>
-              <el-button type="text" class="right-button" @click="loadFormTemplate(ft.jsonUrl)">
+              <el-button link type="primary" class="right-button" @click="loadFormTemplate(ft.jsonUrl)">
                 {{i18nt('designer.hint.loadFormTemplate')}}</el-button>
             </div>
           </el-card>
@@ -96,6 +96,7 @@
   import {addWindowResizeHandler, generateId} from "@/utils/util"
   import i18n from "@/utils/i18n"
   import axios from 'axios'
+  import SvgIcon from "@/components/svg-icon/index";
 
   // import ftImg1 from '@/assets/ft-images/t1.png'
   // import ftImg2 from '@/assets/ft-images/t2.png'
@@ -110,6 +111,7 @@
     name: "FieldPanel",
     mixins: [i18n],
     components: {
+      SvgIcon
     },
     props: {
       designer: Object,

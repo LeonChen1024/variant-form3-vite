@@ -72,13 +72,18 @@
       previewState: { //是否表单预览状态
         type: Boolean,
         default: false
-      }
+      },
+      globalDsv: { // 全局数据源变量
+        type: Object,
+        default: () => ({})
+      },
     },
     provide() {
       return {
         refList: this.widgetRefList,
         sfRefList: this.subFormRefList,  //收集SubForm引用
         getFormConfig: () => this.formJsonObj.formConfig,  /* 解决provide传递formConfig属性的响应式更新问题！！ */
+        getGlobalDsv: () => this.globalDsv, // 全局数据源变量
         globalOptionData: this.optionData,
         getOptionData: () => this.optionData,  /* 该方法用于在异步更新option-data之后重新获取到最新值 */
         globalModel: {
@@ -164,6 +169,10 @@
       },
 
       getContainerWidgetName(widget) {
+        if (widget.type === 'grid') {  //grid-item跟VueGridLayout全局注册组件重名，故特殊处理！！
+          return 'vf-grid-item'
+        }
+
         return widget.type + '-item'
       },
 
@@ -377,6 +386,10 @@
 
       getNativeForm() { //获取原生form引用
         return this.$refs['renderForm']
+      },
+
+      getFormRef() {
+        return this
       },
 
       getWidgetRef(widgetName, showError = false) {
@@ -686,6 +699,14 @@
        */
       getEC(componentName) {
         return this.externalComponents[componentName]
+      },
+
+      /**
+       * 获取globalDsv对象
+       * @returns {*}
+       */
+      getGlobalDsv() {
+        return this.globalDsv
       },
 
       //--------------------- 以上为组件支持外部调用的API方法 end ------------------//

@@ -1,6 +1,6 @@
 <template>
   <td class="table-cell" :class="[selected ? 'selected' : '', customClass]"
-      :style="{width: widget.options.cellWidth + '!important' || '', height: widget.options.cellHeight + '!important' || ''}"
+      :style="{width: widget.options.cellWidth + '!important' || '', height: widget.options.cellHeight + '!important' || '', 'word-break': !!widget.options.wordBreak ? 'break-all' : 'normal'}"
       :colspan="widget.options.colspan || 1" :rowspan="widget.options.rowspan || 1"
       @click.stop="selectWidget(widget)">
     <draggable :list="widget.widgetList" item-key="id" v-bind="{group:'dragGroup', ghostClass: 'ghost',animation: 200}"
@@ -58,6 +58,7 @@
   import i18n from "@/utils/i18n"
   import FieldComponents from '@/components/form-designer/form-widget/field-widget/index'
   import refMixinDesign from "@/components/form-designer/refMixinDesign"
+  import SvgIcon from '@/components/svg-icon'
 
   export default {
     name: "TableCellWidget",
@@ -66,6 +67,7 @@
     inject: ['refList'],
     components: {
       ...FieldComponents,
+      SvgIcon,
     },
     props: {
       widget: Object,

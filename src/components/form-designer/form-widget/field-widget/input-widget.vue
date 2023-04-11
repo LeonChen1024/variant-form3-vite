@@ -1,42 +1,16 @@
 <template>
-  <form-item-wrapper
-    :designer="designer"
-    :field="field"
-    :rules="rules"
-    :design-state="designState"
-    :parent-widget="parentWidget"
-    :parent-list="parentList"
-    :index-of-parent-list="indexOfParentList"
-    :sub-form-row-index="subFormRowIndex"
-    :sub-form-col-index="subFormColIndex"
-    :sub-form-row-id="subFormRowId"
-  >
-    <el-input
-      ref="fieldEditor"
-      v-model="fieldModel"
-      :disabled="field.options.disabled"
-      :readonly="field.options.readonly"
-      :size="widgetSize"
-      class="hide-spin-button"
-      :type="inputType"
-      :show-password="field.options.showPassword"
-      :placeholder="field.options.placeholder"
-      :clearable="field.options.clearable"
-      :minlength="field.options.minLength"
-      :maxlength="field.options.maxLength"
-      :show-word-limit="field.options.showWordLimit"
-      :prefix-icon="field.options.prefixIcon"
-      :suffix-icon="field.options.suffixIcon"
-      @focus="handleFocusCustomEvent"
-      @blur="handleBlurCustomEvent"
-      @input="handleInputCustomEvent"
-      @change="handleChangeEvent"
-    >
+  <form-item-wrapper :designer="designer" :field="field" :rules="rules" :design-state="designState"
+    :parent-widget="parentWidget" :parent-list="parentList" :index-of-parent-list="indexOfParentList"
+    :sub-form-row-index="subFormRowIndex" :sub-form-col-index="subFormColIndex" :sub-form-row-id="subFormRowId">
+    <el-input ref="fieldEditor" v-model="fieldModel" :disabled="field.options.disabled" :readonly="field.options.readonly"
+      :size="widgetSize" class="hide-spin-button" :type="inputType" :show-password="field.options.showPassword"
+      :placeholder="field.options.placeholder" :clearable="field.options.clearable" :minlength="field.options.minLength"
+      :maxlength="field.options.maxLength" :show-word-limit="field.options.showWordLimit"
+      :prefix-icon="field.options.prefixIcon" :suffix-icon="field.options.suffixIcon" @focus="handleFocusCustomEvent"
+      @blur="handleBlurCustomEvent" @input="handleInputCustomEvent" @change="handleChangeEvent">
       <template #append v-if="field.options.appendButton">
-        <el-button
-          :disabled="field.options.disabled || field.options.appendButtonDisabled"
-          @click="emitAppendButtonClick"
-        >
+        <el-button :disabled="field.options.disabled || field.options.appendButtonDisabled"
+          @click="emitAppendButtonClick">
           <svg-icon :icon-class="field.options.buttonIcon" />
         </el-button>
       </template>
@@ -49,6 +23,7 @@ import FormItemWrapper from './form-item-wrapper'
 import emitter from '@/utils/emitter'
 import i18n, { translate } from "@/utils/i18n";
 import fieldMixin from "@/components/form-designer/form-widget/field-widget/fieldMixin";
+import SvgIcon from "@/components/svg-icon/index";
 
 export default {
   name: "input-widget",
@@ -82,6 +57,7 @@ export default {
   },
   components: {
     FormItemWrapper,
+    SvgIcon,
   },
   data() {
     return {
@@ -102,6 +78,19 @@ export default {
   },
   beforeCreate() {
     /* 这里不能访问方法和属性！！ */
+  },
+
+  subFormRowIndex: { /* 子表单组件行索引，从0开始计数 */
+    type: Number,
+    default: -1
+  },
+  subFormColIndex: { /* 子表单组件列索引，从0开始计数 */
+    type: Number,
+    default: -1
+  },
+  subFormRowId: { /* 子表单组件行Id，唯一id且不可变 */
+    type: String,
+    default: ''
   },
 
   created() {
@@ -130,5 +119,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../../../styles/global.scss"; /* form-item-wrapper已引入，还需要重复引入吗？ */
+@import "../../../../styles/global.scss";
+/* form-item-wrapper已引入，还需要重复引入吗？ */
 </style>
